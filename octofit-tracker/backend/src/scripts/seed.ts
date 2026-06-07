@@ -2,6 +2,7 @@
  * Seed the octofit_db database with test data
  */
 import mongoose from 'mongoose';
+import { connectDB } from '../config/database';
 import User from '../models/User';
 import Team from '../models/Team';
 import Workout from '../models/Workout';
@@ -12,7 +13,7 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/octofi
 
 const seed = async () => {
   console.log('Seed the octofit_db database with test data');
-  await mongoose.connect(MONGODB_URI);
+  await connectDB();
 
   // Clear collections
   await Promise.all([
