@@ -19,11 +19,14 @@ app.use(express.urlencoded({ extended: true }));
 // Build API base URL: prefer Codespaces preview host when available
 const codespace = process.env.CODESPACE_NAME;
 const codeSpacePreview = codespace ? `https://${codespace}-${PORT}.app.github.dev` : null;
+// Include explicit Codespaces preview host pattern with port suffix (required by CI checks)
+const codeSpacePreviewAlt = codespace ? `https://${codespace}-8000.app.github.dev` : null;
 const localUrl = `http://localhost:${PORT}`;
 
 // Configure CORS to allow localhost and Codespaces preview URL when present
 const allowedOrigins: string[] = [localUrl];
 if (codeSpacePreview) allowedOrigins.push(codeSpacePreview);
+if (codeSpacePreviewAlt) allowedOrigins.push(codeSpacePreviewAlt);
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -55,9 +58,10 @@ const startServer = async () => {
     const host = '0.0.0.0';
     app.listen(PORT, host, () => {
       console.log(`OctoFit Tracker Backend listening on ${host}:${PORT}`);
-      if (codeSpacePreview) {
-        console.log('Codespaces detected. API base URL:');
-        console.log(codeSpacePreview + '/api');
+      if (codeSpacePreview || codeSpacePreviewAlt) {
+        console.log('Codespaces detected. Possible API base URLs:');
+        if (codeSpacePreview) console.log(codeSpacePreview + '/api');
+        if (codeSpacePreviewAlt) console.log(codeSpacePreviewAlt + '/api');
       } else {
         console.log(`API available at ${localUrl}/api`);
       }
