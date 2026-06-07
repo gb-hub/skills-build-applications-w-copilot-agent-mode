@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import { getApiBaseUrl } from '../utils/api'
 
+/**
+ * API endpoint: https://{VITE_CODESPACE_NAME}-8000.app.github.dev/api/users/
+ * Falls back to http://localhost:8000/api/users/ for local development
+ */
 const API_ENDPOINT = '/api/users/'
 
 export default function Users() {

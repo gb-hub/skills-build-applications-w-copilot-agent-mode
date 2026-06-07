@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import { getApiBaseUrl } from '../utils/api'
 
+/**
+ * API endpoint: https://{VITE_CODESPACE_NAME}-8000.app.github.dev/api/activities/
+ * Falls back to http://localhost:8000/api/activities/ for local development
+ */
 const API_ENDPOINT = '/api/activities/'
 
 export default function Activities() {
