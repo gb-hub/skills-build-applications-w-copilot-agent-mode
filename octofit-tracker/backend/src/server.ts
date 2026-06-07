@@ -1,5 +1,6 @@
 import express, { Express, Request, Response } from 'express';
 import mongoose from 'mongoose';
+import cors from 'cors';
 import { connectDB } from './config/database';
 import usersRouter from './routes/users';
 import teamsRouter from './routes/teams';
@@ -14,6 +15,24 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/octofi
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Build API base URL: prefer Codespaces preview host when available
+const codespace = process.env.CODESPACE_NAME;
+const codeSpacePreview = codespace ? `https://${codespace}-${PORT}.app.github.dev` : null;
+const localUrl = `http://localhost:${PORT}`;
+
+// Configure CORS to allow localhost and Codespaces preview URL when present
+const allowedOrigins: string[] = [localUrl];
+if (codeSpacePreview) allowedOrigins.push(codeSpacePreview);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow non-browser requests (curl, Postman) when origin is undefined
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+    return callback(new Error(`CORS policy does not allow access from origin ${origin}`));
+  },
+}));
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
@@ -36,16 +55,11 @@ const startServer = async () => {
     const host = '0.0.0.0';
     app.listen(PORT, host, () => {
       console.log(`OctoFit Tracker Backend listening on ${host}:${PORT}`);
-      console.log(`API available at http://localhost:${PORT}/api`);
-
-      const codespace = process.env.CODESPACE_NAME;
-      if (codespace) {
-        // Common Codespaces preview host patterns; log a helpful preview URL when available.
-        const preview1 = `https://${PORT}-${codespace}.githubpreview.dev`;
-        const preview2 = `https://${codespace}-${PORT}.preview.app.github.dev`;
-        console.log('Codespaces detected. Possible preview URLs:');
-        console.log(preview1);
-        console.log(preview2);
+      if (codeSpacePreview) {
+        console.log('Codespaces detected. API base URL:');
+        console.log(codeSpacePreview + '/api');
+      } else {
+        console.log(`API available at ${localUrl}/api`);
       }
     });
   } catch (error) {
