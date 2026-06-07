@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
-import { fetchData, createData } from '../utils/api'
+import { getApiBaseUrl } from '../utils/api'
+
+const API_ENDPOINT = '/api/activities/'
 
 export default function Activities() {
   const [activities, setActivities] = useState([])
@@ -11,8 +13,15 @@ export default function Activities() {
       try {
         setLoading(true)
         setError(null)
-        const data = await fetchData('activities')
-        setActivities(data)
+        const baseUrl = getApiBaseUrl()
+        const response = await fetch(`${baseUrl}${API_ENDPOINT}`)
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        const data = await response.json()
+        // Handle paginated responses or direct arrays
+        const result = data.results || (Array.isArray(data) ? data : [data])
+        setActivities(result)
       } catch (err) {
         setError(err.message)
       } finally {
@@ -25,11 +34,22 @@ export default function Activities() {
 
   const handleAddActivity = async () => {
     try {
-      const newActivity = await createData('activities', {
-        name: 'New Activity',
-        date: new Date().toISOString().split('T')[0],
-        duration: 0,
+      const baseUrl = getApiBaseUrl()
+      const response = await fetch(`${baseUrl}${API_ENDPOINT}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: 'New Activity',
+          date: new Date().toISOString().split('T')[0],
+          duration: 0,
+        }),
       })
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      const newActivity = await response.json()
       setActivities([...activities, newActivity])
     } catch (err) {
       setError('Failed to create activity: ' + err.message)

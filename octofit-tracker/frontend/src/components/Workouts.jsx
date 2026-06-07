@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
-import { fetchData, createData } from '../utils/api'
+import { getApiBaseUrl } from '../utils/api'
+
+const API_ENDPOINT = '/api/workouts/'
 
 export default function Workouts() {
   const [workouts, setWorkouts] = useState([])
@@ -11,8 +13,15 @@ export default function Workouts() {
       try {
         setLoading(true)
         setError(null)
-        const data = await fetchData('workouts')
-        setWorkouts(data)
+        const baseUrl = getApiBaseUrl()
+        const response = await fetch(`${baseUrl}${API_ENDPOINT}`)
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        const data = await response.json()
+        // Handle paginated responses or direct arrays
+        const result = data.results || (Array.isArray(data) ? data : [data])
+        setWorkouts(result)
       } catch (err) {
         setError(err.message)
       } finally {
@@ -25,11 +34,22 @@ export default function Workouts() {
 
   const handleAddWorkout = async () => {
     try {
-      const newWorkout = await createData('workouts', {
-        name: 'New Workout',
-        description: 'A new workout routine',
-        difficulty: 'intermediate',
+      const baseUrl = getApiBaseUrl()
+      const response = await fetch(`${baseUrl}${API_ENDPOINT}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: 'New Workout',
+          description: 'A new workout routine',
+          difficulty: 'intermediate',
+        }),
       })
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      const newWorkout = await response.json()
       setWorkouts([...workouts, newWorkout])
     } catch (err) {
       setError('Failed to create workout: ' + err.message)

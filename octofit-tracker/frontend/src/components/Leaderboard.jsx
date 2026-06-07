@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
-import { fetchData } from '../utils/api'
+import { getApiBaseUrl } from '../utils/api'
+
+const API_ENDPOINT = '/api/leaderboard/'
 
 export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState([])
@@ -11,8 +13,15 @@ export default function Leaderboard() {
       try {
         setLoading(true)
         setError(null)
-        const data = await fetchData('leaderboard')
-        setLeaderboard(data)
+        const baseUrl = getApiBaseUrl()
+        const response = await fetch(`${baseUrl}${API_ENDPOINT}`)
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        const data = await response.json()
+        // Handle paginated responses or direct arrays
+        const result = data.results || (Array.isArray(data) ? data : [data])
+        setLeaderboard(result)
       } catch (err) {
         setError(err.message)
       } finally {

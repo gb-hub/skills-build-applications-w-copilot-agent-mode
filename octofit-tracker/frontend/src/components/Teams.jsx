@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
-import { fetchData, createData } from '../utils/api'
+import { getApiBaseUrl } from '../utils/api'
+
+const API_ENDPOINT = '/api/teams/'
 
 export default function Teams() {
   const [teams, setTeams] = useState([])
@@ -11,8 +13,15 @@ export default function Teams() {
       try {
         setLoading(true)
         setError(null)
-        const data = await fetchData('teams')
-        setTeams(data)
+        const baseUrl = getApiBaseUrl()
+        const response = await fetch(`${baseUrl}${API_ENDPOINT}`)
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        const data = await response.json()
+        // Handle paginated responses or direct arrays
+        const result = data.results || (Array.isArray(data) ? data : [data])
+        setTeams(result)
       } catch (err) {
         setError(err.message)
       } finally {
@@ -25,10 +34,21 @@ export default function Teams() {
 
   const handleAddTeam = async () => {
     try {
-      const newTeam = await createData('teams', {
-        name: 'New Team',
-        description: 'A new fitness team',
+      const baseUrl = getApiBaseUrl()
+      const response = await fetch(`${baseUrl}${API_ENDPOINT}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: 'New Team',
+          description: 'A new fitness team',
+        }),
       })
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      const newTeam = await response.json()
       setTeams([...teams, newTeam])
     } catch (err) {
       setError('Failed to create team: ' + err.message)
